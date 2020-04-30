@@ -24,36 +24,40 @@ public class PlayerController : MonoBehaviour
 
     /*Velocity = external forces here*/
     private Vector3 velocity = Vector3.zero; //for jump/gravity
+    private float ySpeed = 0f;
     [SerializeField] private float gravity = 9f;
 
-    /*Grounding player*/
+    /*Grounding player
     private float interactGroundRadius = 0.5f;
     private bool isGrounded = false;
     private float halfHeightOfPlayer;
-    [SerializeField] private LayerMask groundMask;
+    [SerializeField] private LayerMask groundMask;*/
 
     private void Start()
     {
-        halfHeightOfPlayer = GetComponent<Collider>().bounds.extents.y;
-        groundMask = LayerMask.NameToLayer("Ground");
+        //halfHeightOfPlayer = GetComponent<Collider>().bounds.extents.y;
+        //groundMask = LayerMask.NameToLayer("Ground");
         curJumpSpeed = jumpSpeed;
     }
 
     void Update()
     {
-        BasicMovement();
+        RotateHorizontal();
 
-        isGrounded = Physics.CheckSphere(transform.position - Vector3.up * halfHeightOfPlayer, interactGroundRadius, groundMask, QueryTriggerInteraction.Ignore);
-        if (isGrounded && velocity.y < 0)
+        //isGrounded = Physics.CheckSphere(transform.position - Vector3.up * halfHeightOfPlayer, interactGroundRadius, groundMask, QueryTriggerInteraction.Ignore);
+        if (charController.isGrounded && velocity.y < 0)
         {
             velocity.y = 0f;
         }
 
+        velocity = Input.GetAxis("Vertical") * transform.forward * speed;
+
         Jump();
 
-        velocity.y -= gravity;
+        velocity.y -= gravity * Time.deltaTime;
         charController.Move(velocity * Time.deltaTime);
 
+        /*Interactions*/
         if (Input.GetKeyDown(KeyCode.R) && IsInteracting())
         {
             focus.TryInteract(gameObject);
@@ -88,25 +92,17 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
-    //rotate for horizontal, move forward/backwards for vertical
-    private void BasicMovement()
+    //rotate for horizontal
+    private void RotateHorizontal()
     {
         var yaw = Input.GetAxis("Horizontal");
+
 
         if (Mathf.Abs(yaw) > Mathf.Epsilon)
         {
             transform.Rotate(Vector3.up, yaw * Time.deltaTime * rotSpeed);
         }
-        else
-        {
-            yaw = 0f;
-        }
 
-        movement = Input.GetAxis("Vertical") * transform.forward;
-        if (movement != Vector3.zero)
-        {
-            charController.Move(movement * Time.deltaTime * speed);
-        }
     }
 
     //TODO: touch up this mechanic
@@ -119,11 +115,9 @@ public class PlayerController : MonoBehaviour
         {
             curJumpDuration += Time.deltaTime;
 
-            //cancel gravity, not realistic, but gravity is annoying
-            velocity.y += gravity * Time.deltaTime;
-
             curJumpSpeed = Mathf.Max(0.1f, curJumpSpeed - jumpDampening);
             velocity.y += curJumpSpeed;
+
         }
         else
         {
