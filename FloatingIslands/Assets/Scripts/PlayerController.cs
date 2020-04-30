@@ -3,6 +3,10 @@
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    /*Interactions*/
+    private Interact focus;
+    [SerializeField] private float interactDist = 15f;
+
     /*Basic movement*/
     [SerializeField] private CharacterController charController;
     [SerializeField] private float speed = 5f;
@@ -50,6 +54,38 @@ public class PlayerController : MonoBehaviour
         velocity.y -= gravity;
         charController.Move(velocity * Time.deltaTime);
 
+        if (Input.GetKeyDown(KeyCode.R) && IsInteracting())
+        {
+            focus.TryInteract(gameObject);
+        }
+
+    }
+
+    private bool IsInteracting()
+    {
+        RaycastHit raycastHit;
+        Vector3 infrontPos = transform.forward * interactDist;
+
+        if (Physics.Raycast(transform.position, transform.position - infrontPos, out raycastHit, 50f))
+        {
+
+            focus = raycastHit.transform.GetComponent<Interact>();
+            if (focus != null)
+            {
+                return true;
+            }
+        }
+        else if (Physics.Raycast(transform.position, transform.position + infrontPos, out raycastHit, 50f))
+        {
+            //for the tall objs
+            focus = raycastHit.transform.GetComponent<Interact>();
+            if (focus != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     //rotate for horizontal, move forward/backwards for vertical
